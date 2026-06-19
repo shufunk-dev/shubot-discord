@@ -1,0 +1,14 @@
+{
+  "website": {
+    "response": "Visit our official website at: https://example.com",
+    "category": "Links"
+  },
+  "rules": {
+    "response": "1. Be respectful\n2. No spam\n3. Follow Discord TOS",
+    "category": "Rules"
+  },
+  "edsquad": {
+    "response": "Shufunk has a squad in Elite Dangerous that's named \"Old Souls\" and if you wish to learn more about them check out https://elite.shufunk.net",
+    "category": "Elite Dangerous"
+  }
+}

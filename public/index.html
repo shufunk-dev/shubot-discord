@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Bot Control Center</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts: Inter and Fira Code for terminal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="glow-bg"></div>
+  
+  <div class="container">
+    <header class="app-header">
+      <div class="header-logo">
+        <svg class="discord-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36">
+          <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.46,75.46,0,0,0,72.77,0c.81.7,1.66,1.38,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129.87,48.12,123.3,25.39,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.88,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.12,46,96.12,53,91,65.69,84.69,65.69Z" fill="#5865F2"/>
+        </svg>
+        <h1>Discord Bot <span>Control Center</span></h1>
+      </div>
+      <div class="system-status-indicator">
+        <span class="status-dot offline" id="statusDot"></span>
+        <span class="status-text" id="statusLabel">OFFLINE</span>
+      </div>
+    </header>
+
+    <div class="grid-layout">
+      <!-- Left Panel: Controls & Terminal -->
+      <div class="panel-left">
+        <!-- Control Card -->
+        <section class="card control-card">
+          <div class="card-header">
+            <h2>Process Controller</h2>
+            <p>Manage bot process lifecycle</p>
+          </div>
+          <div class="control-actions">
+            <button id="btnStart" class="btn btn-success">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Start Bot
+            </button>
+            <button id="btnStop" class="btn btn-danger" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1 1 1 0 011 1v4a1 1 0 01-1 1 1 1 0 01-1-1v-4zM13 10a1 1 0 011-1 1 1 0 011 1v4a1 1 0 01-1 1 1 1 0 01-1-1v-4z" />
+              </svg>
+              Stop Bot
+            </button>
+            <button id="btnRestart" class="btn btn-warning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17" />
+              </svg>
+              Restart Bot
+            </button>
+          </div>
+        </section>
+
+        <!-- Console Terminal Card -->
+        <section class="card terminal-card">
+          <div class="card-header terminal-header">
+            <div>
+              <h2>Live Console Log</h2>
+              <p>Real-time output stream from bot.js</p>
+            </div>
+            <div class="terminal-controls">
+              <button id="btnAutoscroll" class="btn-toggle active" title="Toggle Autoscroll">
+                Autoscroll: On
+              </button>
+              <button id="btnClearConsole" class="btn-icon" title="Clear Console">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="terminal-body" id="terminalConsole">
+            <div class="log-entry system"><span class="timestamp">[00:00:00]</span> <span class="text">Connecting to launcher logs...</span></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Panel: Configurations & Dev Notes -->
+      <div class="panel-right">
+        <!-- Settings Card -->
+        <section class="card settings-card">
+          <div class="card-header">
+            <h2>Bot Configurations</h2>
+            <p>Customize environmental credentials and commands</p>
+          </div>
+          <form id="settingsForm" class="settings-form">
+            <div class="form-group">
+              <label for="tokenInput">
+                Discord Bot Token
+                <span class="badge" id="tokenBadge">Not Configured</span>
+              </label>
+              <div class="input-password-wrapper">
+                <input type="password" id="tokenInput" placeholder="Paste your bot token here..." autocomplete="new-password">
+                <button type="button" id="btnToggleToken" class="btn-toggle-visibility">
+                  <svg id="eyeOpenSvg" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+            </div>
+
+            <div class="form-group">
+              <label for="ownerIdInput">Owner Discord User ID</label>
+              <input type="text" id="ownerIdInput" placeholder="Enter your 18-19 digit Discord User ID...">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-4">
+                <label for="prefixInput">Command Prefix</label>
+                <input type="text" id="prefixInput" placeholder="!" maxlength="5" required value="!">
+              </div>
+              <div class="form-group col-8">
+                <label for="statusTypeSelect">Activity Type</label>
+                <select id="statusTypeSelect">
+                  <option value="PLAYING">Playing</option>
+                  <option value="LISTENING">Listening to</option>
+                  <option value="WATCHING">Watching</option>
+                  <option value="COMPETING">Competing in</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="statusTextInput">Activity Status Text</label>
+              <input type="text" id="statusTextInput" placeholder="with code!" value="with Discord.js!">
+            </div>
+
+            <button type="submit" id="btnSaveConfig" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              Save Configurations
+            </button>
+          </form>
+        </section>
+
+        <!-- Commands Manager Card -->
+        <section class="card commands-card">
+          <div class="card-header">
+            <h2>Commands Manager</h2>
+            <p>Manage built-in and custom text commands</p>
+          </div>
+          
+          <div class="commands-tabs">
+            <button type="button" class="tab-btn active" id="tabBuiltIn">Built-in</button>
+            <button type="button" class="tab-btn" id="tabCustom">Custom Commands</button>
+          </div>
+
+          <!-- Built-in Commands Tab Content -->
+          <div class="tab-content" id="contentBuiltIn">
+            <ul class="command-list">
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ping</span>
+                <span class="cmd-desc">Check latency of the bot & connection speed.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>say &lt;message&gt;</span>
+                <span class="cmd-desc">Repeats the text provided by the user.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>server</span>
+                <span class="cmd-desc">Displays summary information about the server.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>user</span>
+                <span class="cmd-desc">Displays user profile details and join dates.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>help</span>
+                <span class="cmd-desc">Shows command details and listing menu.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Custom Commands Tab Content -->
+          <div class="tab-content hidden" id="contentCustom">
+            <div id="customCommandsList" class="custom-commands-list">
+              <!-- Custom commands will be populated here -->
+              <p class="no-commands">No custom commands added yet.</p>
+            </div>
+            
+            <form id="customCommandForm" class="custom-command-form">
+              <h3 id="formTitle">Create Custom Command</h3>
+              
+              <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                  <label for="customCmdName">Command Name</label>
+                  <div class="input-prefix-wrapper">
+                    <span class="input-prefix-char cmd-prefix">!</span>
+                    <input type="text" id="customCmdName" placeholder="rules" required pattern="[a-zA-Z0-9]+" title="Alphanumeric characters only">
+                  </div>
+                </div>
+                
+                <div class="form-group" style="flex: 1;">
+                  <label for="customCmdCategory">Category</label>
+                  <input type="text" id="customCmdCategory" placeholder="General" list="categorySuggestions">
+                  <datalist id="categorySuggestions">
+                    <!-- Suggestions will be populated dynamically -->
+                  </datalist>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 0.5rem;">
+                <label for="customCmdResponse">Response Text</label>
+                <input type="text" id="customCmdResponse" placeholder="Be nice!" required>
+              </div>
+
+              <div class="form-actions-row" style="display: flex; gap: 0.5rem; justify-content: flex-end; width: 100%;">
+                <button type="button" id="btnCancelEdit" class="btn btn-toggle hidden" style="margin-top: 0; padding: 0.5rem 1.25rem;">Cancel</button>
+                <button type="submit" id="btnSubmitCustom" class="btn btn-warning btn-sm" style="margin-top: 0;">Add Command</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Tutorial Guide -->
+        <section class="card info-card">
+          <div class="card-header">
+            <h2>Quick Set Up Guide</h2>
+          </div>
+          <div class="info-body">
+            <ol>
+              <li>Go to the <a href="https://discord.com/developers/applications" target="_blank" class="link">Discord Developer Portal</a>.</li>
+              <li>Create a **New Application** and navigate to the **Bot** tab.</li>
+              <li>Click **Reset Token** and copy the Token, then paste it in the configuration input above and click **Save**.</li>
+              <li>Enable **Privileged Gateway Intents**: Check **Presence Intent**, **Server Members Intent**, and **Message Content Intent** (required for messages).</li>
+              <li>Under **OAuth2 > URL Generator**, check `bot` and `applications.commands` scopes. In Bot Permissions, select **Administrator** or **Send Messages**, **Read Message History**, **Manage Messages**, etc. Copy the URL to invite the bot to your server.</li>
+            </ol>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
