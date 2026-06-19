@@ -2,6 +2,7 @@
   "name": "discord-bot-dashboard",
   "version": "1.0.0",
   "description": "Discord Bot with a local Web GUI Launcher Dashboard",
+  "license": "MIT",
   "main": "launcher.js",
   "scripts": {
     "start": "node launcher.js",
