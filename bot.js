@@ -588,27 +588,29 @@ client.on('messageCreate', async (message) => {
     else if (subCommand === 'galnet') {
       const sent = await message.reply("Fetching latest Galnet articles...");
       try {
-        const url = 'https://cms.elitedangerous.com/api/galnet?locale=en';
+        const url = 'https://cms.zaonce.net/en-GB/jsonapi/node/galnet_article?sort=-published_at&page[limit]=3';
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        const data = await res.json();
+        const result = await res.json();
         
-        if (!data || !Array.isArray(data) || data.length === 0) {
+        if (!result || !Array.isArray(result.data) || result.data.length === 0) {
           return sent.edit("❌ No Galnet articles found.");
         }
         
-        const articles = data.slice(0, 3);
         let reply = `📰 **Latest Galnet News Headlines**\n`;
         
-        articles.forEach((art, idx) => {
-          let bodyClean = art.body || '';
+        result.data.forEach((art, idx) => {
+          const title = art.attributes?.title || 'No Title';
+          const date = art.attributes?.field_galnet_date || '';
+          let bodyClean = art.attributes?.body?.value || '';
+          // Strip any residual HTML tags
           bodyClean = bodyClean.replace(/<[^>]*>/g, '');
           bodyClean = bodyClean.trim();
           if (bodyClean.length > 250) {
             bodyClean = bodyClean.substring(0, 247) + '...';
           }
           
-          reply += `\n**${idx + 1}. ${art.title}** - *${art.date || ''}*\n> ${bodyClean}\n`;
+          reply += `\n**${idx + 1}. ${title}** - *${date}*\n> ${bodyClean}\n`;
         });
         
         sent.edit(reply);
