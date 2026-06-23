@@ -428,9 +428,10 @@ client.on('messageCreate', async (message) => {
         
         const allegiance = info.allegiance || 'None';
         const government = info.government || 'None';
-        const faction = info.controllingFaction || 'None';
+        const faction = info.faction || 'None';
         const security = info.security || 'None';
-        const economy = info.primaryEconomy || 'None';
+        const economy = info.secondEconomy ? `${info.economy} / ${info.secondEconomy}` : (info.economy || 'None');
+        const population = info.population !== undefined ? info.population.toLocaleString() : 'Unknown';
         
         let reply = `🚀 **System Profile: ${data.name}**\n`;
         reply += `• Allegiance: **${allegiance}**\n`;
@@ -438,6 +439,7 @@ client.on('messageCreate', async (message) => {
         reply += `• Government: **${government}**\n`;
         reply += `• Economy: **${economy}**\n`;
         reply += `• Security: **${security}**\n`;
+        reply += `• Population: **${population}**\n`;
         reply += `• Coordinates: \`X: ${coords.x ?? 0}, Y: ${coords.y ?? 0}, Z: ${coords.z ?? 0}\``;
         
         sent.edit(reply);
