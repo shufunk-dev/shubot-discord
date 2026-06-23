@@ -156,7 +156,7 @@ app.get('/api/config', (req, res) => {
 // Save Config Endpoint
 app.post('/api/config', (req, res) => {
   try {
-    const { token, prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName, edsmApiKey } = req.body;
+    const { token, prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName, edsmApiKey, galnetAutoPost, galnetChannelId } = req.body;
     
     // Save to config.json
     const configPath = path.join(__dirname, 'config.json');
@@ -166,7 +166,9 @@ app.post('/api/config', (req, res) => {
       statusText,
       moderationEnabled: moderationEnabled === true,
       dndEnabled: dndEnabled === true,
-      eliteEnabled: eliteEnabled === true
+      eliteEnabled: eliteEnabled === true,
+      galnetAutoPost: galnetAutoPost === true,
+      galnetChannelId: galnetChannelId || ""
     };
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
     

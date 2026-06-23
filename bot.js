@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, ActivityType, PermissionFlagsBits } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +19,9 @@ let config = {
   statusText: "with Discord.js!",
   moderationEnabled: true,
   dndEnabled: true,
-  eliteEnabled: true
+  eliteEnabled: true,
+  galnetAutoPost: false,
+  galnetChannelId: ""
 };
 
 let customCommands = {};
@@ -96,10 +98,95 @@ function updatePresence() {
   }
 }
 
+let galnetInterval = null;
+
+async function checkNewGalnetArticles() {
+  if (config.eliteEnabled === false || config.galnetAutoPost === false || !config.galnetChannelId) {
+    return;
+  }
+  
+  console.log('[Bot Galnet] Checking for new Galnet articles...');
+  
+  try {
+    const url = 'https://cms.zaonce.net/en-GB/jsonapi/node/galnet_article?sort=-published_at&page[limit]=1';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP status ${res.status}`);
+    const result = await res.json();
+    
+    if (!result || !Array.isArray(result.data) || result.data.length === 0) {
+      return;
+    }
+    
+    const latestArticle = result.data[0];
+    const articleId = latestArticle.id;
+    
+    // Read local state
+    const statePath = path.join(__dirname, 'galnet_state.json');
+    let lastPostedId = '';
+    if (fs.existsSync(statePath)) {
+      try {
+        const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+        lastPostedId = state.lastPostedId || '';
+      } catch (e) {
+        console.error(`[Bot Galnet Error] Failed to read state: ${e.message}`);
+      }
+    }
+    
+    if (articleId !== lastPostedId) {
+      console.log(`[Bot Galnet] New article detected: "${latestArticle.attributes.title}". Posting to channel: ${config.galnetChannelId}`);
+      
+      const channel = await client.channels.fetch(config.galnetChannelId).catch((err) => {
+        console.error(`[Bot Galnet Error] Failed to fetch channel ${config.galnetChannelId}: ${err.message}`);
+        return null;
+      });
+      
+      if (channel) {
+        const title = latestArticle.attributes?.title || 'No Title';
+        const date = latestArticle.attributes?.field_galnet_date || '';
+        let bodyClean = latestArticle.attributes?.body?.value || '';
+        bodyClean = bodyClean.replace(/<[^>]*>/g, '').trim();
+        
+        const embed = new EmbedBuilder()
+          .setTitle(`📰 Galnet: ${title}`)
+          .setDescription(bodyClean.length > 2048 ? bodyClean.substring(0, 2045) + '...' : bodyClean)
+          .setColor('#ffaa00')
+          .setFooter({ text: `Galnet News • ${date}` });
+          
+        const imageKey = latestArticle.attributes?.field_galnet_image;
+        if (imageKey) {
+          embed.setThumbnail(`https://hosting.zaonce.net/elite-dangerous/galnet/${encodeURIComponent(imageKey)}.png`);
+        }
+        
+        await channel.send({ embeds: [embed] }).catch(err => {
+          console.error(`[Bot Galnet Error] Failed to send message: ${err.message}`);
+        });
+        
+        fs.writeFileSync(statePath, JSON.stringify({ lastPostedId: articleId }, null, 2), 'utf8');
+      } else {
+        console.warn(`[Bot Galnet Warning] Auto-posting is enabled but the configured channel ID ${config.galnetChannelId} could not be resolved.`);
+      }
+    }
+  } catch (error) {
+    console.error(`[Bot Galnet Error] Failed checking Galnet: ${error.message}`);
+  }
+}
+
+function startGalnetPoller() {
+  if (galnetInterval) {
+    clearInterval(galnetInterval);
+    galnetInterval = null;
+  }
+
+  // Poll immediately, then every 30 minutes
+  checkNewGalnetArticles();
+  galnetInterval = setInterval(checkNewGalnetArticles, 30 * 60 * 1000);
+}
+
 // Bot ready event
-client.once('clientReady', () => {
+client.once('ready', () => {
   console.log(`[Bot] Ready! Logged in as ${client.user.tag}`);
   updatePresence();
+  startGalnetPoller();
 });
 
 // Handle incoming messages
@@ -827,6 +914,7 @@ fs.watch(path.join(__dirname, 'config.json'), (eventType) => {
       loadConfig();
       if (client.user) {
         updatePresence();
+        checkNewGalnetArticles();
       }
     }, 500);
   }

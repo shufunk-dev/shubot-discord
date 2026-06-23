@@ -28,6 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnToggleEdsmKey = document.getElementById('btnToggleEdsmKey');
   const btnSaveEliteSettings = document.getElementById('btnSaveEliteSettings');
   
+  const galnetAutoPostInput = document.getElementById('galnetAutoPostInput');
+  const galnetChannelIdInput = document.getElementById('galnetChannelIdInput');
+  const btnSaveGalnetSettings = document.getElementById('btnSaveGalnetSettings');
+  
   const cmdPrefixes = document.querySelectorAll('.cmd-prefix');
   
   let autoscroll = true;
@@ -70,21 +74,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Get all form configurations as a payload object
+  function getCurrentConfig() {
+    return {
+      prefix: prefixInput.value.trim(),
+      statusType: statusTypeSelect.value,
+      statusText: statusTextInput.value.trim(),
+      ownerId: ownerIdInput.value.trim(),
+      moderationEnabled: moderationEnabledInput.checked,
+      dndEnabled: dndEnabledInput.checked,
+      eliteEnabled: eliteEnabledInput.checked,
+      edsmCommanderName: edsmCmdrInput ? edsmCmdrInput.value.trim() : '',
+      galnetAutoPost: galnetAutoPostInput ? galnetAutoPostInput.checked : false,
+      galnetChannelId: galnetChannelIdInput ? galnetChannelIdInput.value.trim() : ''
+    };
+  }
+
   // Save EDSM Credentials
   if (btnSaveEliteSettings) {
     btnSaveEliteSettings.addEventListener('click', async () => {
-      const edsmCommanderName = edsmCmdrInput.value.trim();
       const edsmApiKey = edsmApiKeyInput.value.trim();
-      
-      const prefix = prefixInput.value.trim();
-      const statusType = statusTypeSelect.value;
-      const statusText = statusTextInput.value.trim();
-      const ownerId = ownerIdInput.value.trim();
-      const moderationEnabled = moderationEnabledInput.checked;
-      const dndEnabled = dndEnabledInput.checked;
-      const eliteEnabled = eliteEnabledInput.checked;
-      
-      const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
+      const payload = getCurrentConfig();
       if (edsmApiKey) {
         payload.edsmApiKey = edsmApiKey;
       }
@@ -109,6 +119,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Save Galnet Settings
+  if (btnSaveGalnetSettings) {
+    btnSaveGalnetSettings.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(getCurrentConfig())
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('Galnet settings saved successfully!');
+          loadConfig();
+        } else {
+          alert(`Failed to save Galnet settings: ${data.error}`);
+        }
+      } catch (err) {
+        alert(`Error saving Galnet settings: ${err.message}`);
+      }
+    });
+  }
+
   // Load configuration from server
   async function loadConfig() {
     try {
@@ -122,6 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
         moderationEnabledInput.checked = data.config.moderationEnabled !== false;
         dndEnabledInput.checked = data.config.dndEnabled !== false;
         eliteEnabledInput.checked = data.config.eliteEnabled !== false;
+        
+        if (galnetAutoPostInput) {
+          galnetAutoPostInput.checked = data.config.galnetAutoPost === true;
+        }
+        if (galnetChannelIdInput) {
+          galnetChannelIdInput.value = data.config.galnetChannelId || '';
+        }
         
         // Update command preview prefixes
         updateCommandPrefixes(data.config.prefix || '!');
@@ -174,17 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     
     const token = tokenInput.value.trim();
-    const prefix = prefixInput.value.trim();
-    const statusType = statusTypeSelect.value;
-    const statusText = statusTextInput.value.trim();
-    const ownerId = ownerIdInput.value.trim();
-    const moderationEnabled = moderationEnabledInput.checked;
-    const dndEnabled = dndEnabledInput.checked;
-    const eliteEnabled = eliteEnabledInput.checked;
-    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
-    
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
-    // Only send token if the user typed something in
+    const payload = getCurrentConfig();
     if (token) {
       payload.token = token;
     }
@@ -212,21 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-save Moderation toggle state on change
   moderationEnabledInput.addEventListener('change', async () => {
     const moderationEnabled = moderationEnabledInput.checked;
-    const prefix = prefixInput.value.trim();
-    const statusType = statusTypeSelect.value;
-    const statusText = statusTextInput.value.trim();
-    const ownerId = ownerIdInput.value.trim();
-    const dndEnabled = dndEnabledInput.checked;
-    const eliteEnabled = eliteEnabledInput.checked;
-    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
-    
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
-    
     try {
       const response = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(getCurrentConfig())
       });
       const data = await response.json();
       if (!data.success) {
@@ -242,21 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-save D&D toggle state on change
   dndEnabledInput.addEventListener('change', async () => {
     const dndEnabled = dndEnabledInput.checked;
-    const prefix = prefixInput.value.trim();
-    const statusType = statusTypeSelect.value;
-    const statusText = statusTextInput.value.trim();
-    const ownerId = ownerIdInput.value.trim();
-    const moderationEnabled = moderationEnabledInput.checked;
-    const eliteEnabled = eliteEnabledInput.checked;
-    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
-    
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
-    
     try {
       const response = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(getCurrentConfig())
       });
       const data = await response.json();
       if (!data.success) {
@@ -272,21 +281,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-save Elite Dangerous toggle state on change
   eliteEnabledInput.addEventListener('change', async () => {
     const eliteEnabled = eliteEnabledInput.checked;
-    const prefix = prefixInput.value.trim();
-    const statusType = statusTypeSelect.value;
-    const statusText = statusTextInput.value.trim();
-    const ownerId = ownerIdInput.value.trim();
-    const moderationEnabled = moderationEnabledInput.checked;
-    const dndEnabled = dndEnabledInput.checked;
-    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
-    
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
-    
     try {
       const response = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(getCurrentConfig())
       });
       const data = await response.json();
       if (!data.success) {
@@ -298,6 +297,28 @@ document.addEventListener('DOMContentLoaded', () => {
       eliteEnabledInput.checked = !eliteEnabled;
     }
   });
+
+  // Auto-save Galnet toggle state on change
+  if (galnetAutoPostInput) {
+    galnetAutoPostInput.addEventListener('change', async () => {
+      const galnetAutoPost = galnetAutoPostInput.checked;
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(getCurrentConfig())
+        });
+        const data = await response.json();
+        if (!data.success) {
+          alert(`Failed to auto-save Galnet state: ${data.error}`);
+          galnetAutoPostInput.checked = !galnetAutoPost;
+        }
+      } catch (err) {
+        console.error('Error auto-saving Galnet toggle:', err);
+        galnetAutoPostInput.checked = !galnetAutoPost;
+      }
+    });
+  }
 
 
   // Update Status UI

@@ -1,8 +1,10 @@
 {
   "prefix": "?",
   "statusType": "PLAYING",
-  "statusText": "I am god here!",
+  "statusText": "I saw a squirrel!",
   "moderationEnabled": true,
   "dndEnabled": true,
-  "eliteEnabled": true
+  "eliteEnabled": true,
+  "galnetAutoPost": false,
+  "galnetChannelId": ""
 }
