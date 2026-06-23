@@ -17,7 +17,8 @@ let config = {
   prefix: "!",
   statusType: "PLAYING",
   statusText: "with Discord.js!",
-  moderationEnabled: true
+  moderationEnabled: true,
+  dndEnabled: true
 };
 
 let customCommands = {};
@@ -341,6 +342,61 @@ client.on('messageCreate', async (message) => {
     }
   }
   
+  else if (commandName === 'roll') {
+    if (config.dndEnabled === false) {
+      return message.reply("❌ The D&D module is currently disabled for this bot.");
+    }
+    
+    const input = args[0] || '1d20';
+    const diceRegex = /^(\d+)?d(\d+)([\+\-]\d+)?$/i;
+    const match = input.match(diceRegex);
+    
+    if (!match) {
+      return message.reply(`❌ Invalid roll format. Use something like \`1d20\`, \`3d6+2\`, or just \`roll\` to roll a d20.`);
+    }
+    
+    const count = match[1] ? parseInt(match[1]) : 1;
+    const sides = parseInt(match[2]);
+    const modifier = match[3] ? parseInt(match[3]) : 0;
+    
+    if (count <= 0 || count > 100) {
+      return message.reply("❌ You can only roll between 1 and 100 dice at a time.");
+    }
+    
+    if (sides <= 1 || sides > 1000) {
+      return message.reply("❌ Dice sides must be between 2 and 1000.");
+    }
+    
+    const rolls = [];
+    let sum = 0;
+    for (let i = 0; i < count; i++) {
+      const roll = Math.floor(Math.random() * sides) + 1;
+      rolls.push(roll);
+      sum += roll;
+    }
+    
+    const total = sum + modifier;
+    let rollsStr = rolls.join(', ');
+    if (rollsStr.length > 100) {
+      rollsStr = rollsStr.substring(0, 97) + '...';
+    }
+    
+    let responseMsg = `🎲 **D&D Roll Result** for **${input}**:\n`;
+    if (count > 1) {
+      responseMsg += `• Individual Rolls: \`[${rollsStr}]\` (Sum: **${sum}**)\n`;
+    } else {
+      responseMsg += `• Roll: **${sum}**\n`;
+    }
+    
+    if (modifier !== 0) {
+      responseMsg += `• Modifier: **${modifier > 0 ? '+' : ''}${modifier}**\n`;
+    }
+    
+    responseMsg += `• **Total**: 🏆 **${total}** 🏆`;
+    
+    message.reply(responseMsg);
+  }
+  
   else if (commandName === 'addcmd') {
     const ownerId = process.env.OWNER_ID;
     if (!ownerId || ownerId.trim() === '') {
@@ -473,6 +529,9 @@ client.on('messageCreate', async (message) => {
 • \`${prefix}ban <member> [reason]\` - Ban a server member.
 • \`${prefix}timeout <member> <duration> [reason]\` - Timeout a member (e.g. \`10m\`, \`2h\`, \`1d\`).
 • \`${prefix}untimeout <member>\` - Remove active timeout from a member.
+
+🐉 **D&D Commands**:
+• \`${prefix}roll [dice]\` - Roll dice (e.g. \`d20\`, \`3d6\`, \`1d20+5\`).
 
 👑 **Owner-Only Commands**:
 • \`${prefix}addcmd <name> <category> <response...>\` - Add/edit custom command.

@@ -2,5 +2,6 @@
   "prefix": "?",
   "statusType": "PLAYING",
   "statusText": "I am god here!",
-  "moderationEnabled": true
+  "moderationEnabled": true,
+  "dndEnabled": true
 }

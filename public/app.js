@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusTextInput = document.getElementById('statusTextInput');
   const ownerIdInput = document.getElementById('ownerIdInput');
   const moderationEnabledInput = document.getElementById('moderationEnabledInput');
+  const dndEnabledInput = document.getElementById('dndEnabledInput');
   
   const cmdPrefixes = document.querySelectorAll('.cmd-prefix');
   
@@ -55,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusTypeSelect.value = data.config.statusType || 'PLAYING';
         statusTextInput.value = data.config.statusText || 'with Discord.js!';
         moderationEnabledInput.checked = data.config.moderationEnabled !== false;
+        dndEnabledInput.checked = data.config.dndEnabled !== false;
         
         // Update command preview prefixes
         updateCommandPrefixes(data.config.prefix || '!');
@@ -94,8 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusText = statusTextInput.value.trim();
     const ownerId = ownerIdInput.value.trim();
     const moderationEnabled = moderationEnabledInput.checked;
+    const dndEnabled = dndEnabledInput.checked;
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled };
     // Only send token if the user typed something in
     if (token) {
       payload.token = token;
@@ -128,8 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusType = statusTypeSelect.value;
     const statusText = statusTextInput.value.trim();
     const ownerId = ownerIdInput.value.trim();
+    const dndEnabled = dndEnabledInput.checked;
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled };
     
     try {
       const response = await fetch('/api/config', {
@@ -145,6 +149,34 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Error auto-saving moderation toggle:', err);
       moderationEnabledInput.checked = !moderationEnabled;
+    }
+  });
+
+  // Auto-save D&D toggle state on change
+  dndEnabledInput.addEventListener('change', async () => {
+    const dndEnabled = dndEnabledInput.checked;
+    const prefix = prefixInput.value.trim();
+    const statusType = statusTypeSelect.value;
+    const statusText = statusTextInput.value.trim();
+    const ownerId = ownerIdInput.value.trim();
+    const moderationEnabled = moderationEnabledInput.checked;
+    
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled };
+    
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!data.success) {
+        alert(`Failed to auto-save D&D state: ${data.error}`);
+        dndEnabledInput.checked = !dndEnabled;
+      }
+    } catch (err) {
+      console.error('Error auto-saving D&D toggle:', err);
+      dndEnabledInput.checked = !dndEnabled;
     }
   });
 
@@ -266,15 +298,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Commands Manager Tabs UI Logic
   const tabBuiltIn = document.getElementById('tabBuiltIn');
   const tabModeration = document.getElementById('tabModeration');
+  const tabDnd = document.getElementById('tabDnd');
   const tabCustom = document.getElementById('tabCustom');
   const contentBuiltIn = document.getElementById('contentBuiltIn');
   const contentModeration = document.getElementById('contentModeration');
+  const contentDnd = document.getElementById('contentDnd');
   const contentCustom = document.getElementById('contentCustom');
   
   // Helper to switch active tabs
   function switchTab(activeTabBtn, activeContent) {
-    [tabBuiltIn, tabModeration, tabCustom].forEach(btn => btn.classList.remove('active'));
-    [contentBuiltIn, contentModeration, contentCustom].forEach(content => content.classList.add('hidden'));
+    [tabBuiltIn, tabModeration, tabDnd, tabCustom].forEach(btn => btn.classList.remove('active'));
+    [contentBuiltIn, contentModeration, contentDnd, contentCustom].forEach(content => content.classList.add('hidden'));
     
     activeTabBtn.classList.add('active');
     activeContent.classList.remove('hidden');
@@ -286,6 +320,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   tabModeration.addEventListener('click', () => {
     switchTab(tabModeration, contentModeration);
+  });
+
+  tabDnd.addEventListener('click', () => {
+    switchTab(tabDnd, contentDnd);
   });
 
   tabCustom.addEventListener('click', () => {
