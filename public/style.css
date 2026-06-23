@@ -733,3 +733,68 @@ select:focus {
   align-self: flex-end;
 }
 
+/* Toggle Switch styling */
+.switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 0;
+}
+
+.switch-label-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.switch-control {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.switch-control input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  transition: .3s ease;
+  border-radius: 34px;
+  border: 1px solid var(--border-color);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-secondary);
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+}
+
+.switch-control input:checked + .slider {
+  background-color: rgba(88, 101, 242, 0.2);
+  border-color: var(--discord-blurple);
+}
+
+.switch-control input:checked + .slider:before {
+  transform: translateX(22px);
+  background-color: #5865F2;
+  box-shadow: 0 0 10px rgba(88, 101, 242, 0.6);
+}
+

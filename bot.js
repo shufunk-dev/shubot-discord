@@ -16,7 +16,8 @@ if (!token || token.trim() === '') {
 let config = {
   prefix: "!",
   statusType: "PLAYING",
-  statusText: "with Discord.js!"
+  statusText: "with Discord.js!",
+  moderationEnabled: true
 };
 
 let customCommands = {};
@@ -113,6 +114,12 @@ client.on('messageCreate', async (message) => {
   const commandName = args.shift().toLowerCase();
   
   console.log(`[Bot Info] User ${message.author.tag} invoked command: ${commandName} ${args.join(' ')}`);
+  
+  // Moderation module toggle check
+  const moderationCmds = ['kick', 'ban', 'timeout', 'untimeout'];
+  if (moderationCmds.includes(commandName) && config.moderationEnabled === false) {
+    return message.reply("❌ The moderation module is currently disabled for this bot.");
+  }
   
   // Commands list
   if (commandName === 'ping') {

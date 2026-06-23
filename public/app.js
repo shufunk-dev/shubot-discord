@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusTypeSelect = document.getElementById('statusTypeSelect');
   const statusTextInput = document.getElementById('statusTextInput');
   const ownerIdInput = document.getElementById('ownerIdInput');
+  const moderationEnabledInput = document.getElementById('moderationEnabledInput');
   
   const cmdPrefixes = document.querySelectorAll('.cmd-prefix');
   
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prefixInput.value = data.config.prefix || '!';
         statusTypeSelect.value = data.config.statusType || 'PLAYING';
         statusTextInput.value = data.config.statusText || 'with Discord.js!';
+        moderationEnabledInput.checked = data.config.moderationEnabled !== false;
         
         // Update command preview prefixes
         updateCommandPrefixes(data.config.prefix || '!');
@@ -91,8 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusType = statusTypeSelect.value;
     const statusText = statusTextInput.value.trim();
     const ownerId = ownerIdInput.value.trim();
+    const moderationEnabled = moderationEnabledInput.checked;
     
-    const payload = { prefix, statusType, statusText, ownerId };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled };
     // Only send token if the user typed something in
     if (token) {
       payload.token = token;
