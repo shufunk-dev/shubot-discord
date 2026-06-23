@@ -137,12 +137,16 @@ app.get('/api/config', (req, res) => {
     
     const tokenExists = !!process.env.DISCORD_TOKEN;
     const ownerId = process.env.OWNER_ID || '';
+    const edsmCommanderName = process.env.EDSM_COMMANDER_NAME || '';
+    const edsmApiKeyExists = !!process.env.EDSM_API_KEY;
     
     res.json({
       success: true,
       config,
       tokenExists,
-      ownerId
+      ownerId,
+      edsmCommanderName,
+      edsmApiKeyExists
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -152,7 +156,7 @@ app.get('/api/config', (req, res) => {
 // Save Config Endpoint
 app.post('/api/config', (req, res) => {
   try {
-    const { token, prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled } = req.body;
+    const { token, prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName, edsmApiKey } = req.body;
     
     // Save to config.json
     const configPath = path.join(__dirname, 'config.json');
@@ -174,6 +178,16 @@ app.post('/api/config', (req, res) => {
     // Update owner ID if provided
     if (ownerId !== undefined) {
       updateEnvVariable('OWNER_ID', ownerId);
+    }
+
+    // Update EDSM Commander Name if provided
+    if (edsmCommanderName !== undefined) {
+      updateEnvVariable('EDSM_COMMANDER_NAME', edsmCommanderName);
+    }
+
+    // Update EDSM API Key if provided
+    if (edsmApiKey !== undefined) {
+      updateEnvVariable('EDSM_API_KEY', edsmApiKey);
     }
     
     addLog('[Dashboard] Configurations updated.', 'system');

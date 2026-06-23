@@ -502,10 +502,18 @@ client.on('messageCreate', async (message) => {
       const cmdrName = args.slice(1).join(' ');
       if (!cmdrName) return message.reply("❌ Please specify a commander name. Example: `!ed cmdr Shufunk`.");
       
+      const apiKey = process.env.EDSM_API_KEY;
+      const botCmdr = process.env.EDSM_COMMANDER_NAME;
+      
+      if (!apiKey || !botCmdr) {
+        return message.reply("❌ EDSM API Credentials are not configured. Please save your EDSM Commander Name and EDSM API Key under the **Elite** tab in the dashboard settings to search commanders.");
+      }
+      
       const sent = await message.reply(`Fetching ranks for CMDR **${cmdrName}**...`);
       try {
-        const ranksUrl = `https://www.edsm.net/api-commander-v1/get-ranks?commanderName=${encodeURIComponent(cmdrName)}`;
-        const posUrl = `https://www.edsm.net/api-commander-v1/get-position?commanderName=${encodeURIComponent(cmdrName)}`;
+        const queryParams = `commanderName=${encodeURIComponent(cmdrName)}&apiKey=${apiKey}&commander=${encodeURIComponent(botCmdr)}`;
+        const ranksUrl = `https://www.edsm.net/api-commander-v1/get-ranks?${queryParams}`;
+        const posUrl = `https://www.edsm.net/api-commander-v1/get-position?${queryParams}`;
         
         const [ranksRes, posRes] = await Promise.all([fetch(ranksUrl), fetch(posUrl)]);
         

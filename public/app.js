@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const moderationEnabledInput = document.getElementById('moderationEnabledInput');
   const dndEnabledInput = document.getElementById('dndEnabledInput');
   const eliteEnabledInput = document.getElementById('eliteEnabledInput');
+  const edsmCmdrInput = document.getElementById('edsmCmdrInput');
+  const edsmApiKeyInput = document.getElementById('edsmApiKeyInput');
+  const edsmKeyBadge = document.getElementById('edsmKeyBadge');
+  const btnToggleEdsmKey = document.getElementById('btnToggleEdsmKey');
+  const btnSaveEliteSettings = document.getElementById('btnSaveEliteSettings');
   
   const cmdPrefixes = document.querySelectorAll('.cmd-prefix');
   
@@ -45,6 +50,64 @@ document.addEventListener('DOMContentLoaded', () => {
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>`;
   });
+
+  // Toggle EDSM Key Visibility
+  let isEdsmKeyVisible = false;
+  if (btnToggleEdsmKey && edsmApiKeyInput) {
+    btnToggleEdsmKey.addEventListener('click', () => {
+      isEdsmKeyVisible = !isEdsmKeyVisible;
+      edsmApiKeyInput.type = isEdsmKeyVisible ? 'text' : 'password';
+      
+      btnToggleEdsmKey.innerHTML = isEdsmKeyVisible 
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.507-4.829m2-1.36a10.125 10.125 0 0112.113 4.22m-3.9 3.9a3 3 0 11-4.22-4.22m3.75 3.75a3 3 0 00-4-4" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+          </svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>`;
+    });
+  }
+
+  // Save EDSM Credentials
+  if (btnSaveEliteSettings) {
+    btnSaveEliteSettings.addEventListener('click', async () => {
+      const edsmCommanderName = edsmCmdrInput.value.trim();
+      const edsmApiKey = edsmApiKeyInput.value.trim();
+      
+      const prefix = prefixInput.value.trim();
+      const statusType = statusTypeSelect.value;
+      const statusText = statusTextInput.value.trim();
+      const ownerId = ownerIdInput.value.trim();
+      const moderationEnabled = moderationEnabledInput.checked;
+      const dndEnabled = dndEnabledInput.checked;
+      const eliteEnabled = eliteEnabledInput.checked;
+      
+      const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
+      if (edsmApiKey) {
+        payload.edsmApiKey = edsmApiKey;
+      }
+      
+      try {
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('EDSM credentials saved successfully!');
+          edsmApiKeyInput.value = '';
+          loadConfig();
+        } else {
+          alert(`Failed to save EDSM credentials: ${data.error}`);
+        }
+      } catch (err) {
+        alert(`Error saving EDSM credentials: ${err.message}`);
+      }
+    });
+  }
 
   // Load configuration from server
   async function loadConfig() {
@@ -76,6 +139,24 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update owner ID field
         ownerIdInput.value = data.ownerId || '';
+
+        // Update EDSM commander field
+        if (edsmCmdrInput) {
+          edsmCmdrInput.value = data.edsmCommanderName || '';
+        }
+        
+        // Update EDSM key badge
+        if (edsmKeyBadge && edsmApiKeyInput) {
+          if (data.edsmApiKeyExists) {
+            edsmKeyBadge.textContent = 'Configured';
+            edsmKeyBadge.className = 'badge configured';
+            edsmApiKeyInput.placeholder = '••••••••••••••••••••••••••••••••••••••••';
+          } else {
+            edsmKeyBadge.textContent = 'Not Configured';
+            edsmKeyBadge.className = 'badge not-configured';
+            edsmApiKeyInput.placeholder = 'Paste your EDSM API key...';
+          }
+        }
       }
     } catch (err) {
       console.error('Error loading config:', err);
@@ -100,8 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const moderationEnabled = moderationEnabledInput.checked;
     const dndEnabled = dndEnabledInput.checked;
     const eliteEnabled = eliteEnabledInput.checked;
+    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
     // Only send token if the user typed something in
     if (token) {
       payload.token = token;
@@ -136,8 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ownerId = ownerIdInput.value.trim();
     const dndEnabled = dndEnabledInput.checked;
     const eliteEnabled = eliteEnabledInput.checked;
+    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
     
     try {
       const response = await fetch('/api/config', {
@@ -165,8 +248,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ownerId = ownerIdInput.value.trim();
     const moderationEnabled = moderationEnabledInput.checked;
     const eliteEnabled = eliteEnabledInput.checked;
+    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
     
     try {
       const response = await fetch('/api/config', {
@@ -194,8 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ownerId = ownerIdInput.value.trim();
     const moderationEnabled = moderationEnabledInput.checked;
     const dndEnabled = dndEnabledInput.checked;
+    const edsmCommanderName = edsmCmdrInput ? edsmCmdrInput.value.trim() : '';
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled, edsmCommanderName };
     
     try {
       const response = await fetch('/api/config', {
