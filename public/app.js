@@ -121,6 +121,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Auto-save Moderation toggle state on change
+  moderationEnabledInput.addEventListener('change', async () => {
+    const moderationEnabled = moderationEnabledInput.checked;
+    const prefix = prefixInput.value.trim();
+    const statusType = statusTypeSelect.value;
+    const statusText = statusTextInput.value.trim();
+    const ownerId = ownerIdInput.value.trim();
+    
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled };
+    
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!data.success) {
+        alert(`Failed to auto-save moderation state: ${data.error}`);
+        moderationEnabledInput.checked = !moderationEnabled;
+      }
+    } catch (err) {
+      console.error('Error auto-saving moderation toggle:', err);
+      moderationEnabledInput.checked = !moderationEnabled;
+    }
+  });
+
+
   // Update Status UI
   function updateStatusUI(status) {
     currentStatus = status;
@@ -235,36 +263,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Custom Commands UI Logic
+  // Commands Manager Tabs UI Logic
   const tabBuiltIn = document.getElementById('tabBuiltIn');
+  const tabModeration = document.getElementById('tabModeration');
   const tabCustom = document.getElementById('tabCustom');
   const contentBuiltIn = document.getElementById('contentBuiltIn');
+  const contentModeration = document.getElementById('contentModeration');
   const contentCustom = document.getElementById('contentCustom');
-  const customCommandsList = document.getElementById('customCommandsList');
-  const customCommandForm = document.getElementById('customCommandForm');
-  const customCmdName = document.getElementById('customCmdName');
-  const customCmdCategory = document.getElementById('customCmdCategory');
-  const customCmdResponse = document.getElementById('customCmdResponse');
   
-  const formTitle = document.getElementById('formTitle');
-  const btnSubmitCustom = document.getElementById('btnSubmitCustom');
-  const btnCancelEdit = document.getElementById('btnCancelEdit');
+  // Helper to switch active tabs
+  function switchTab(activeTabBtn, activeContent) {
+    [tabBuiltIn, tabModeration, tabCustom].forEach(btn => btn.classList.remove('active'));
+    [contentBuiltIn, contentModeration, contentCustom].forEach(content => content.classList.add('hidden'));
+    
+    activeTabBtn.classList.add('active');
+    activeContent.classList.remove('hidden');
+  }
 
-  let editingCommandName = null;
-
-  // Tab switching
   tabBuiltIn.addEventListener('click', () => {
-    tabBuiltIn.classList.add('active');
-    tabCustom.classList.remove('active');
-    contentBuiltIn.classList.remove('hidden');
-    contentCustom.classList.add('hidden');
+    switchTab(tabBuiltIn, contentBuiltIn);
+  });
+
+  tabModeration.addEventListener('click', () => {
+    switchTab(tabModeration, contentModeration);
   });
 
   tabCustom.addEventListener('click', () => {
-    tabCustom.classList.add('active');
-    tabBuiltIn.classList.remove('active');
-    contentCustom.classList.remove('hidden');
-    contentBuiltIn.classList.add('hidden');
+    switchTab(tabCustom, contentCustom);
     loadCustomCommands();
   });
 
