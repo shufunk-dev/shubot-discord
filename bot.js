@@ -186,7 +186,7 @@ function startGalnetPoller() {
 }
 
 // Bot ready event
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`[Bot] Ready! Logged in as ${client.user.tag}`);
   updatePresence();
   startGalnetPoller();
