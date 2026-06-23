@@ -712,20 +712,14 @@ client.on('messageCreate', async (message) => {
     else if (subCommand === 'cg') {
       const sent = await message.reply("Fetching active Community Goals...");
       try {
-        const url = 'https://www.edsm.net/api-v1/community-goals';
-        const res = await fetch(url);
+        const url = 'https://api.orerve.net/2.0/website/initiatives/list?lang=en';
+        const res = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
         
-        if (!data || !Array.isArray(data) || data.length === 0) {
-          return sent.edit("❌ No Community Goals found.");
-        }
-        
-        const activeGoals = data.filter(g => {
-          if (!g.endDate) return false;
-          const end = new Date(g.endDate);
-          return end > new Date();
-        });
+        const activeGoals = data.activeInitiatives || [];
         
         if (activeGoals.length === 0) {
           return sent.edit("🌌 There are currently no active Community Goals in the galaxy.");
@@ -734,14 +728,19 @@ client.on('messageCreate', async (message) => {
         let reply = `🏆 **Active Community Goals** (${activeGoals.length} total)\n`;
         
         activeGoals.forEach((goal) => {
-          const system = goal.system || 'Unknown';
-          const station = goal.station || 'Unknown';
-          const progress = goal.tierReached !== undefined ? `Tier ${goal.tierReached} / ${goal.tierMax || 'Unknown'}` : 'Unknown';
-          const objective = goal.objective || 'Unknown';
+          const name = goal.title || goal.name || 'Unknown Goal';
+          const system = goal.starsystem?.name || goal.systemName || goal.system || 'Unknown';
+          const station = goal.market?.name || goal.stationName || goal.station || 'Unknown';
+          const objective = goal.bulletin || goal.objective || goal.description || 'Unknown';
           
-          reply += `\n**${goal.name}**\n`;
+          let progress = 'Unknown';
+          if (goal.progress !== undefined) {
+            progress = `${(goal.progress * 100).toFixed(1)}%`;
+          }
+          
+          reply += `\n**${name}**\n`;
           reply += `• Location: **${station}** (${system})\n`;
-          reply += `• Progress: **${progress}** *(Contributors: ${goal.contributors?.toLocaleString() || 0})*\n`;
+          reply += `• Progress: **${progress}**\n`;
           reply += `• Objective: *${objective}*\n`;
         });
         
