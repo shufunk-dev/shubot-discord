@@ -3,5 +3,6 @@
   "statusType": "PLAYING",
   "statusText": "I am god here!",
   "moderationEnabled": true,
-  "dndEnabled": true
+  "dndEnabled": true,
+  "eliteEnabled": true
 }

@@ -152,7 +152,7 @@ app.get('/api/config', (req, res) => {
 // Save Config Endpoint
 app.post('/api/config', (req, res) => {
   try {
-    const { token, prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled } = req.body;
+    const { token, prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled } = req.body;
     
     // Save to config.json
     const configPath = path.join(__dirname, 'config.json');
@@ -161,7 +161,8 @@ app.post('/api/config', (req, res) => {
       statusType, 
       statusText,
       moderationEnabled: moderationEnabled === true,
-      dndEnabled: dndEnabled === true
+      dndEnabled: dndEnabled === true,
+      eliteEnabled: eliteEnabled === true
     };
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
     

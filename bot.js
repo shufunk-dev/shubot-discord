@@ -18,7 +18,8 @@ let config = {
   statusType: "PLAYING",
   statusText: "with Discord.js!",
   moderationEnabled: true,
-  dndEnabled: true
+  dndEnabled: true,
+  eliteEnabled: true
 };
 
 let customCommands = {};
@@ -397,6 +398,228 @@ client.on('messageCreate', async (message) => {
     message.reply(responseMsg);
   }
   
+  else if (commandName === 'ed') {
+    if (config.eliteEnabled === false) {
+      return message.reply("❌ The Elite Dangerous module is currently disabled for this bot.");
+    }
+    
+    const subCommand = args[0]?.toLowerCase();
+    if (!subCommand) {
+      return message.reply(`❌ Invalid syntax. Use:\n• \`${prefix}ed system <system>\`\n• \`${prefix}ed station <system> / <station>\`\n• \`${prefix}ed cmdr <name>\`\n• \`${prefix}ed galnet\`\n• \`${prefix}ed cg\``);
+    }
+    
+    if (subCommand === 'system') {
+      const systemName = args.slice(1).join(' ');
+      if (!systemName) return message.reply("❌ Please specify a system name. Example: `!ed system Sol`.");
+      
+      const sent = await message.reply(`Searching for system **${systemName}**...`);
+      try {
+        const url = `https://www.edsm.net/api-v1/system?systemName=${encodeURIComponent(systemName)}&showCoordinates=1&showInformation=1`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+        
+        if (!data || !data.name) {
+          return sent.edit(`❌ System **${systemName}** was not found in EDSM.`);
+        }
+        
+        const info = data.information || {};
+        const coords = data.coords || {};
+        
+        const allegiance = info.allegiance || 'None';
+        const government = info.government || 'None';
+        const faction = info.controllingFaction || 'None';
+        const security = info.security || 'None';
+        const economy = info.primaryEconomy || 'None';
+        
+        let reply = `🚀 **System Profile: ${data.name}**\n`;
+        reply += `• Allegiance: **${allegiance}**\n`;
+        reply += `• Controlling Faction: **${faction}**\n`;
+        reply += `• Government: **${government}**\n`;
+        reply += `• Economy: **${economy}**\n`;
+        reply += `• Security: **${security}**\n`;
+        reply += `• Coordinates: \`X: ${coords.x ?? 0}, Y: ${coords.y ?? 0}, Z: ${coords.z ?? 0}\``;
+        
+        sent.edit(reply);
+      } catch (err) {
+        sent.edit(`❌ Failed to fetch system data: ${err.message}`);
+      }
+    }
+    
+    else if (subCommand === 'station') {
+      const query = args.slice(1).join(' ');
+      const parts = query.split('/');
+      const systemName = parts[0]?.trim();
+      const stationName = parts[1]?.trim();
+      
+      if (!systemName || !stationName) {
+        return message.reply(`❌ Invalid syntax. Use: \`${prefix}ed station <system> / <station>\`\nExample: \`${prefix}ed station Sol / Daedalus\``);
+      }
+      
+      const sent = await message.reply(`Searching for station **${stationName}** in **${systemName}**...`);
+      try {
+        const url = `https://www.edsm.net/api-system-v1/stations?systemName=${encodeURIComponent(systemName)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+        
+        if (!data || !data.name) {
+          return sent.edit(`❌ System **${systemName}** was not found in EDSM.`);
+        }
+        
+        const stations = data.stations || [];
+        const station = stations.find(s => s.name.toLowerCase() === stationName.toLowerCase() || s.name.toLowerCase().includes(stationName.toLowerCase()));
+        
+        if (!station) {
+          return sent.edit(`❌ Station **${stationName}** was not found in the **${systemName}** system.`);
+        }
+        
+        const faction = station.controllingFaction?.name || 'None';
+        const type = station.type || 'Starport';
+        const distance = station.distanceToArrival ? `${station.distanceToArrival.toLocaleString()} Ls` : 'Unknown';
+        const padSize = station.maxLandingPadSize || 'Unknown';
+        const servicesList = [];
+        if (station.haveMarket) servicesList.push('Market');
+        if (station.haveShipyard) servicesList.push('Shipyard');
+        if (station.haveOutfitting) servicesList.push('Outfitting');
+        const services = servicesList.length > 0 ? servicesList.join(', ') : 'None';
+        
+        let reply = `🛰️ **Station Profile: ${station.name}** (${systemName})\n`;
+        reply += `• Type: **${type}**\n`;
+        reply += `• Arrival Distance: **${distance}**\n`;
+        reply += `• Max Pad Size: **${padSize}**\n`;
+        reply += `• Controlling Faction: **${faction}**\n`;
+        reply += `• Services: **${services}**\n`;
+        if (station.allegiance) reply += `• Allegiance: **${station.allegiance}**\n`;
+        
+        sent.edit(reply);
+      } catch (err) {
+        sent.edit(`❌ Failed to fetch station data: ${err.message}`);
+      }
+    }
+    
+    else if (subCommand === 'cmdr') {
+      const cmdrName = args.slice(1).join(' ');
+      if (!cmdrName) return message.reply("❌ Please specify a commander name. Example: `!ed cmdr Shufunk`.");
+      
+      const sent = await message.reply(`Fetching ranks for CMDR **${cmdrName}**...`);
+      try {
+        const ranksUrl = `https://www.edsm.net/api-commander-v1/get-ranks?commanderName=${encodeURIComponent(cmdrName)}`;
+        const posUrl = `https://www.edsm.net/api-commander-v1/get-position?commanderName=${encodeURIComponent(cmdrName)}`;
+        
+        const [ranksRes, posRes] = await Promise.all([fetch(ranksUrl), fetch(posUrl)]);
+        
+        if (!ranksRes.ok) throw new Error(`HTTP error ${ranksRes.status}`);
+        const ranksData = await ranksRes.json();
+        
+        if (ranksData.msgNum === 203 || !ranksData.ranks) {
+          return sent.edit(`❌ Commander **${cmdrName}** has no public logs linked to EDSM.`);
+        }
+        
+        let posData = {};
+        if (posRes.ok) {
+          posData = await posRes.json().catch(() => ({}));
+        }
+        
+        const ranks = ranksData.ranks || {};
+        const combat = ranks.Combat?.name || 'Unknown';
+        const trade = ranks.Trade?.name || 'Unknown';
+        const explore = ranks.Explore?.name || 'Unknown';
+        const cqc = ranks.CQC?.name || 'Unknown';
+        const exobio = ranks.Exobiologist?.name || 'Unknown';
+        
+        let reply = `👤 **Commander Profile: CMDR ${ranksData.commanderName || cmdrName}**\n`;
+        reply += `• Combat Rank: **${combat}**\n`;
+        reply += `• Trade Rank: **${trade}**\n`;
+        reply += `• Exploration Rank: **${explore}**\n`;
+        if (exobio !== 'Unknown') reply += `• Exobiologist Rank: **${exobio}**\n`;
+        if (cqc !== 'Unknown') reply += `• CQC Rank: **${cqc}**\n`;
+        
+        if (posData && posData.system) {
+          reply += `• Current System: **${posData.system}** *(Last updated: ${posData.date || 'unknown'})*\n`;
+        }
+        
+        sent.edit(reply);
+      } catch (err) {
+        sent.edit(`❌ Failed to fetch commander data: ${err.message}`);
+      }
+    }
+    
+    else if (subCommand === 'galnet') {
+      const sent = await message.reply("Fetching latest Galnet articles...");
+      try {
+        const url = 'https://cms.elitedangerous.com/api/galnet?locale=en';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+        
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          return sent.edit("❌ No Galnet articles found.");
+        }
+        
+        const articles = data.slice(0, 3);
+        let reply = `📰 **Latest Galnet News Headlines**\n`;
+        
+        articles.forEach((art, idx) => {
+          let bodyClean = art.body || '';
+          bodyClean = bodyClean.replace(/<[^>]*>/g, '');
+          bodyClean = bodyClean.trim();
+          if (bodyClean.length > 250) {
+            bodyClean = bodyClean.substring(0, 247) + '...';
+          }
+          
+          reply += `\n**${idx + 1}. ${art.title}** - *${art.date || ''}*\n> ${bodyClean}\n`;
+        });
+        
+        sent.edit(reply);
+      } catch (err) {
+        sent.edit(`❌ Failed to fetch Galnet news: ${err.message}`);
+      }
+    }
+    
+    else if (subCommand === 'cg') {
+      const sent = await message.reply("Fetching active Community Goals...");
+      try {
+        const url = 'https://www.edsm.net/api-v1/community-goals';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+        
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          return sent.edit("❌ No Community Goals found.");
+        }
+        
+        const activeGoals = data.filter(g => {
+          if (!g.endDate) return false;
+          const end = new Date(g.endDate);
+          return end > new Date();
+        });
+        
+        if (activeGoals.length === 0) {
+          return sent.edit("🌌 There are currently no active Community Goals in the galaxy.");
+        }
+        
+        let reply = `🏆 **Active Community Goals** (${activeGoals.length} total)\n`;
+        
+        activeGoals.forEach((goal) => {
+          const system = goal.system || 'Unknown';
+          const station = goal.station || 'Unknown';
+          const progress = goal.tierReached !== undefined ? `Tier ${goal.tierReached} / ${goal.tierMax || 'Unknown'}` : 'Unknown';
+          const objective = goal.objective || 'Unknown';
+          
+          reply += `\n**${goal.name}**\n`;
+          reply += `• Location: **${station}** (${system})\n`;
+          reply += `• Progress: **${progress}** *(Contributors: ${goal.contributors?.toLocaleString() || 0})*\n`;
+          reply += `• Objective: *${objective}*\n`;
+        });
+        
+        sent.edit(reply);
+      } catch (err) {
+        sent.edit(`❌ Failed to fetch community goals: ${err.message}`);
+      }
+    }
+  }
+  
   else if (commandName === 'addcmd') {
     const ownerId = process.env.OWNER_ID;
     if (!ownerId || ownerId.trim() === '') {
@@ -532,6 +755,13 @@ client.on('messageCreate', async (message) => {
 
 🐉 **D&D Commands**:
 • \`${prefix}roll [dice]\` - Roll dice (e.g. \`d20\`, \`3d6\`, \`1d20+5\`).
+
+🚀 **Elite Dangerous Commands**:
+• \`${prefix}ed system <system>\` - Search system profile details.
+• \`${prefix}ed station <system> / <station>\` - Search station details in a system.
+• \`${prefix}ed cmdr <commander>\` - Search public commander ranks and position.
+• \`${prefix}ed galnet\` - Fetch latest Galnet news articles.
+• \`${prefix}ed cg\` - Fetch active galactic Community Goals.
 
 👑 **Owner-Only Commands**:
 • \`${prefix}addcmd <name> <category> <response...>\` - Add/edit custom command.

@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ownerIdInput = document.getElementById('ownerIdInput');
   const moderationEnabledInput = document.getElementById('moderationEnabledInput');
   const dndEnabledInput = document.getElementById('dndEnabledInput');
+  const eliteEnabledInput = document.getElementById('eliteEnabledInput');
   
   const cmdPrefixes = document.querySelectorAll('.cmd-prefix');
   
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusTextInput.value = data.config.statusText || 'with Discord.js!';
         moderationEnabledInput.checked = data.config.moderationEnabled !== false;
         dndEnabledInput.checked = data.config.dndEnabled !== false;
+        eliteEnabledInput.checked = data.config.eliteEnabled !== false;
         
         // Update command preview prefixes
         updateCommandPrefixes(data.config.prefix || '!');
@@ -97,8 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ownerId = ownerIdInput.value.trim();
     const moderationEnabled = moderationEnabledInput.checked;
     const dndEnabled = dndEnabledInput.checked;
+    const eliteEnabled = eliteEnabledInput.checked;
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
     // Only send token if the user typed something in
     if (token) {
       payload.token = token;
@@ -132,8 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusText = statusTextInput.value.trim();
     const ownerId = ownerIdInput.value.trim();
     const dndEnabled = dndEnabledInput.checked;
+    const eliteEnabled = eliteEnabledInput.checked;
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
     
     try {
       const response = await fetch('/api/config', {
@@ -160,8 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusText = statusTextInput.value.trim();
     const ownerId = ownerIdInput.value.trim();
     const moderationEnabled = moderationEnabledInput.checked;
+    const eliteEnabled = eliteEnabledInput.checked;
     
-    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled };
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
     
     try {
       const response = await fetch('/api/config', {
@@ -177,6 +182,35 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Error auto-saving D&D toggle:', err);
       dndEnabledInput.checked = !dndEnabled;
+    }
+  });
+
+  // Auto-save Elite Dangerous toggle state on change
+  eliteEnabledInput.addEventListener('change', async () => {
+    const eliteEnabled = eliteEnabledInput.checked;
+    const prefix = prefixInput.value.trim();
+    const statusType = statusTypeSelect.value;
+    const statusText = statusTextInput.value.trim();
+    const ownerId = ownerIdInput.value.trim();
+    const moderationEnabled = moderationEnabledInput.checked;
+    const dndEnabled = dndEnabledInput.checked;
+    
+    const payload = { prefix, statusType, statusText, ownerId, moderationEnabled, dndEnabled, eliteEnabled };
+    
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!data.success) {
+        alert(`Failed to auto-save Elite Dangerous state: ${data.error}`);
+        eliteEnabledInput.checked = !eliteEnabled;
+      }
+    } catch (err) {
+      console.error('Error auto-saving Elite Dangerous toggle:', err);
+      eliteEnabledInput.checked = !eliteEnabled;
     }
   });
 
@@ -299,16 +333,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabBuiltIn = document.getElementById('tabBuiltIn');
   const tabModeration = document.getElementById('tabModeration');
   const tabDnd = document.getElementById('tabDnd');
+  const tabElite = document.getElementById('tabElite');
   const tabCustom = document.getElementById('tabCustom');
   const contentBuiltIn = document.getElementById('contentBuiltIn');
   const contentModeration = document.getElementById('contentModeration');
   const contentDnd = document.getElementById('contentDnd');
+  const contentElite = document.getElementById('contentElite');
   const contentCustom = document.getElementById('contentCustom');
   
   // Helper to switch active tabs
   function switchTab(activeTabBtn, activeContent) {
-    [tabBuiltIn, tabModeration, tabDnd, tabCustom].forEach(btn => btn.classList.remove('active'));
-    [contentBuiltIn, contentModeration, contentDnd, contentCustom].forEach(content => content.classList.add('hidden'));
+    [tabBuiltIn, tabModeration, tabDnd, tabElite, tabCustom].forEach(btn => btn.classList.remove('active'));
+    [contentBuiltIn, contentModeration, contentDnd, contentElite, contentCustom].forEach(content => content.classList.add('hidden'));
     
     activeTabBtn.classList.add('active');
     activeContent.classList.remove('hidden');
@@ -324,6 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   tabDnd.addEventListener('click', () => {
     switchTab(tabDnd, contentDnd);
+  });
+
+  tabElite.addEventListener('click', () => {
+    switchTab(tabElite, contentElite);
   });
 
   tabCustom.addEventListener('click', () => {

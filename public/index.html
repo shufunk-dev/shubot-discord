@@ -154,6 +154,7 @@
             <button type="button" class="tab-btn active" id="tabBuiltIn">Built-in</button>
             <button type="button" class="tab-btn" id="tabModeration">Moderation</button>
             <button type="button" class="tab-btn" id="tabDnd">D&D</button>
+            <button type="button" class="tab-btn" id="tabElite">Elite</button>
             <button type="button" class="tab-btn" id="tabCustom">Custom Commands</button>
           </div>
 
@@ -235,6 +236,44 @@
               <li>
                 <span class="cmd-syntax"><span class="cmd-prefix">!</span>roll [dice]</span>
                 <span class="cmd-desc">Rolls dice (e.g. d20, 3d6, 1d20+5, or just roll).</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Elite Dangerous Commands Tab Content -->
+          <div class="tab-content hidden" id="contentElite">
+            <div class="elite-toggle-card" style="margin-bottom: 1.25rem; padding: 1rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid var(--border-color);">
+              <div class="switch-container">
+                <div>
+                  <span class="switch-label-text" style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Enable Elite Dangerous Module</span>
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">Allows users to query EDSM and Frontier Galnet news feeds.</p>
+                </div>
+                <label class="switch-control">
+                  <input type="checkbox" id="eliteEnabledInput">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <ul class="command-list" style="max-height: 220px; overflow-y: auto; padding-right: 0.25rem;">
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ed system &lt;system&gt;</span>
+                <span class="cmd-desc">Get system details and coordinates (e.g. Sol).</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ed station &lt;system&gt; / &lt;station&gt;</span>
+                <span class="cmd-desc">Get station info (e.g. Sol / Daedalus).</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ed cmdr &lt;commander&gt;</span>
+                <span class="cmd-desc">Lookup Commander ranks & location on EDSM.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ed galnet</span>
+                <span class="cmd-desc">Retrieve top 3 latest Galnet News summaries.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ed cg</span>
+                <span class="cmd-desc">List active galaxy Community Goals.</span>
               </li>
             </ul>
           </div>
