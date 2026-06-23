@@ -479,20 +479,46 @@ client.on('messageCreate', async (message) => {
         const faction = station.controllingFaction?.name || 'None';
         const type = station.type || 'Starport';
         const distance = station.distanceToArrival ? `${station.distanceToArrival.toLocaleString()} Ls` : 'Unknown';
-        const padSize = station.maxLandingPadSize || 'Unknown';
+        
+        let padSize = station.maxLandingPadSize;
+        if (!padSize) {
+          const typeLower = type.toLowerCase();
+          if (typeLower.includes('port') || 
+              typeLower.includes('coriolis') || 
+              typeLower.includes('orbis') || 
+              typeLower.includes('ocellus') || 
+              typeLower.includes('asteroid base') || 
+              typeLower.includes('megaship') ||
+              typeLower.includes('carrier') ||
+              typeLower.includes('installation')) {
+            padSize = 'Large';
+          } else if (typeLower.includes('outpost') || 
+                     typeLower.includes('settlement') || 
+                     typeLower.includes('surface station')) {
+            padSize = 'Medium';
+          } else {
+            padSize = 'Unknown';
+          }
+        }
+        
         const servicesList = [];
         if (station.haveMarket) servicesList.push('Market');
         if (station.haveShipyard) servicesList.push('Shipyard');
         if (station.haveOutfitting) servicesList.push('Outfitting');
         const services = servicesList.length > 0 ? servicesList.join(', ') : 'None';
         
+        const economy = station.secondEconomy ? `${station.economy} / ${station.secondEconomy}` : (station.economy || 'None');
+        const government = station.government || 'None';
+        
         let reply = `🛰️ **Station Profile: ${station.name}** (${systemName})\n`;
         reply += `• Type: **${type}**\n`;
+        reply += `• Allegiance: **${station.allegiance || 'None'}**\n`;
+        reply += `• Government: **${government}**\n`;
+        reply += `• Economy: **${economy}**\n`;
         reply += `• Arrival Distance: **${distance}**\n`;
         reply += `• Max Pad Size: **${padSize}**\n`;
         reply += `• Controlling Faction: **${faction}**\n`;
         reply += `• Services: **${services}**\n`;
-        if (station.allegiance) reply += `• Allegiance: **${station.allegiance}**\n`;
         
         sent.edit(reply);
       } catch (err) {
