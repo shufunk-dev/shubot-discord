@@ -513,14 +513,14 @@ client.on('messageCreate', async (message) => {
       try {
         const queryParams = `commanderName=${encodeURIComponent(cmdrName)}&apiKey=${apiKey}&commander=${encodeURIComponent(botCmdr)}`;
         const ranksUrl = `https://www.edsm.net/api-commander-v1/get-ranks?${queryParams}`;
-        const posUrl = `https://www.edsm.net/api-commander-v1/get-position?${queryParams}`;
+        const posUrl = `https://www.edsm.net/api-logs-v1/get-position?${queryParams}`;
         
         const [ranksRes, posRes] = await Promise.all([fetch(ranksUrl), fetch(posUrl)]);
         
         if (!ranksRes.ok) throw new Error(`HTTP error ${ranksRes.status}`);
         const ranksData = await ranksRes.json();
         
-        if (ranksData.msgNum === 203 || !ranksData.ranks) {
+        if (ranksData.msgnum === 203 || !ranksData.ranks) {
           return sent.edit(`❌ Commander **${cmdrName}** has no public logs linked to EDSM.`);
         }
         
@@ -529,19 +529,23 @@ client.on('messageCreate', async (message) => {
           posData = await posRes.json().catch(() => ({}));
         }
         
-        const ranks = ranksData.ranks || {};
-        const combat = ranks.Combat?.name || 'Unknown';
-        const trade = ranks.Trade?.name || 'Unknown';
-        const explore = ranks.Explore?.name || 'Unknown';
-        const cqc = ranks.CQC?.name || 'Unknown';
-        const exobio = ranks.Exobiologist?.name || 'Unknown';
+        const ranksVerbose = ranksData.ranksVerbose || {};
+        const combat = ranksVerbose.Combat || 'Unknown';
+        const trade = ranksVerbose.Trade || 'Unknown';
+        const explore = ranksVerbose.Explore || 'Unknown';
+        const cqc = ranksVerbose.CQC || 'Unknown';
+        const exobio = ranksVerbose.Exobiologist || 'Unknown';
+        const fed = ranksVerbose.Federation || 'Unknown';
+        const emp = ranksVerbose.Empire || 'Unknown';
         
         let reply = `👤 **Commander Profile: CMDR ${ranksData.commanderName || cmdrName}**\n`;
         reply += `• Combat Rank: **${combat}**\n`;
         reply += `• Trade Rank: **${trade}**\n`;
         reply += `• Exploration Rank: **${explore}**\n`;
         if (exobio !== 'Unknown') reply += `• Exobiologist Rank: **${exobio}**\n`;
-        if (cqc !== 'Unknown') reply += `• CQC Rank: **${cqc}**\n`;
+        if (cqc !== 'Unknown' && cqc !== 'Helpless') reply += `• CQC Rank: **${cqc}**\n`;
+        if (fed !== 'Unknown') reply += `• Federation Rank: **${fed}**\n`;
+        if (emp !== 'Unknown') reply += `• Empire Rank: **${emp}**\n`;
         
         if (posData && posData.system) {
           reply += `• Current System: **${posData.system}** *(Last updated: ${posData.date || 'unknown'})*\n`;
