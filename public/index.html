@@ -157,7 +157,7 @@
 
           <!-- Built-in Commands Tab Content -->
           <div class="tab-content" id="contentBuiltIn">
-            <ul class="command-list">
+            <ul class="command-list" style="max-height: 320px; overflow-y: auto; padding-right: 0.25rem;">
               <li>
                 <span class="cmd-syntax"><span class="cmd-prefix">!</span>ping</span>
                 <span class="cmd-desc">Check latency of the bot & connection speed.</span>
@@ -177,6 +177,22 @@
               <li>
                 <span class="cmd-syntax"><span class="cmd-prefix">!</span>help</span>
                 <span class="cmd-desc">Shows command details and listing menu.</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>kick &lt;@user&gt; [reason]</span>
+                <span class="cmd-desc">Kicks a member (Requires Kick Members permission).</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>ban &lt;@user&gt; [reason]</span>
+                <span class="cmd-desc">Bans a member (Requires Ban Members permission).</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>timeout &lt;@user&gt; &lt;duration&gt; [reason]</span>
+                <span class="cmd-desc">Timeouts a member (Requires Moderate Members permission; e.g. 10m, 2h).</span>
+              </li>
+              <li>
+                <span class="cmd-syntax"><span class="cmd-prefix">!</span>untimeout &lt;@user&gt;</span>
+                <span class="cmd-desc">Removes active timeout from a member.</span>
               </li>
             </ul>
           </div>

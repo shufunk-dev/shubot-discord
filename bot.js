@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType, PermissionFlagsBits } = require('discord.js');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
@@ -153,6 +153,187 @@ client.on('messageCreate', async (message) => {
     message.reply(`👤 **User Information**:\n• Username: **${message.author.username}**\n• Tag: **${message.author.tag}**\n• Account Created: **${createdDate}**\n• Server Joined: **${joinedDate}**`);
   }
   
+  else if (commandName === 'kick') {
+    if (!message.guild) return message.reply("❌ This command can only be used in a server.");
+    
+    // Check if author has permission to kick
+    if (!message.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+      return message.reply("❌ You do not have permission to kick members (requires `Kick Members` permission).");
+    }
+    
+    // Check if bot has permission to kick
+    if (!message.guild.members.me.permissions.has(PermissionFlagsBits.KickMembers)) {
+      return message.reply("❌ I do not have permission to kick members. Please check my server permissions.");
+    }
+    
+    const target = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
+    if (!target) {
+      return message.reply(`❌ Please mention a valid member or provide their User ID.\nExample: \`${prefix}kick @user Spamming\``);
+    }
+    
+    // Check if target is kickable (hierarchy check)
+    if (!target.kickable) {
+      return message.reply("❌ I cannot kick this member. They may have a higher role than me or are the server owner.");
+    }
+    
+    // Check if author role is higher than target role
+    if (message.member.roles.highest.position <= target.roles.highest.position && message.guild.ownerId !== message.author.id) {
+      return message.reply("❌ You cannot kick this member because their highest role is equal to or higher than yours.");
+    }
+    
+    const reason = args.slice(1).join(' ') || 'No reason provided';
+    try {
+      await target.kick(reason);
+      message.reply(`✅ **${target.user.tag}** has been kicked.\n• **Reason**: ${reason}\n• **Moderator**: ${message.author.tag}`);
+      console.log(`[Moderation] Kicked ${target.user.tag} for: ${reason} (by ${message.author.tag})`);
+    } catch (err) {
+      message.reply(`❌ Failed to kick member: ${err.message}`);
+    }
+  }
+  
+  else if (commandName === 'ban') {
+    if (!message.guild) return message.reply("❌ This command can only be used in a server.");
+    
+    // Check if author has permission to ban
+    if (!message.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+      return message.reply("❌ You do not have permission to ban members (requires `Ban Members` permission).");
+    }
+    
+    // Check if bot has permission to ban
+    if (!message.guild.members.me.permissions.has(PermissionFlagsBits.BanMembers)) {
+      return message.reply("❌ I do not have permission to ban members. Please check my server permissions.");
+    }
+    
+    const target = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
+    if (!target) {
+      return message.reply(`❌ Please mention a valid member or provide their User ID.\nExample: \`${prefix}ban @user Guild rules violation\``);
+    }
+    
+    // Check if target is bannable (hierarchy check)
+    if (!target.bannable) {
+      return message.reply("❌ I cannot ban this member. They may have a higher role than me or are the server owner.");
+    }
+    
+    // Check if author role is higher than target role
+    if (message.member.roles.highest.position <= target.roles.highest.position && message.guild.ownerId !== message.author.id) {
+      return message.reply("❌ You cannot ban this member because their highest role is equal to or higher than yours.");
+    }
+    
+    const reason = args.slice(1).join(' ') || 'No reason provided';
+    try {
+      await target.ban({ reason });
+      message.reply(`✅ **${target.user.tag}** has been banned.\n• **Reason**: ${reason}\n• **Moderator**: ${message.author.tag}`);
+      console.log(`[Moderation] Banned ${target.user.tag} for: ${reason} (by ${message.author.tag})`);
+    } catch (err) {
+      message.reply(`❌ Failed to ban member: ${err.message}`);
+    }
+  }
+  
+  else if (commandName === 'timeout') {
+    if (!message.guild) return message.reply("❌ This command can only be used in a server.");
+    
+    // Check if author has permission to moderate/timeout
+    if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return message.reply("❌ You do not have permission to timeout members (requires `Timeout Members` permission).");
+    }
+    
+    // Check if bot has permission to moderate/timeout
+    if (!message.guild.members.me.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return message.reply("❌ I do not have permission to timeout members. Please check my server permissions.");
+    }
+    
+    const target = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
+    if (!target) {
+      return message.reply(`❌ Please mention a valid member or provide their User ID.\nExample: \`${prefix}timeout @user 10m Spamming\``);
+    }
+    
+    const durationArg = args[1];
+    if (!durationArg) {
+      return message.reply(`❌ Please specify a duration (e.g. \`10m\`, \`2h\`, \`1d\`).`);
+    }
+    
+    // Parse duration
+    let ms = 0;
+    const match = durationArg.match(/^(\d+)([mhd])$/i);
+    if (match) {
+      const amount = parseInt(match[1]);
+      const unit = match[2].toLowerCase();
+      if (unit === 'm') ms = amount * 60 * 1000;
+      else if (unit === 'h') ms = amount * 60 * 60 * 1000;
+      else if (unit === 'd') ms = amount * 24 * 60 * 60 * 1000;
+    } else {
+      const rawNum = parseInt(durationArg);
+      if (!isNaN(rawNum)) {
+        ms = rawNum * 60 * 1000;
+      }
+    }
+    
+    if (ms <= 0 || ms > 28 * 24 * 60 * 60 * 1000) {
+      return message.reply("❌ Invalid duration. Please specify a value between 1 minute and 28 days (e.g., `10m`, `3h`, `7d`).");
+    }
+    
+    // Check if target is moderatable
+    if (!target.moderatable) {
+      return message.reply("❌ I cannot moderate this member. They may have a higher role than me or are the server owner.");
+    }
+    
+    // Check if author role is higher than target role
+    if (message.member.roles.highest.position <= target.roles.highest.position && message.guild.ownerId !== message.author.id) {
+      return message.reply("❌ You cannot timeout this member because their highest role is equal to or higher than yours.");
+    }
+    
+    const reason = args.slice(2).join(' ') || 'No reason provided';
+    try {
+      await target.timeout(ms, reason);
+      message.reply(`✅ **${target.user.tag}** has been timed out for **${durationArg}**.\n• **Reason**: ${reason}\n• **Moderator**: ${message.author.tag}`);
+      console.log(`[Moderation] Timed out ${target.user.tag} for ${durationArg}: ${reason} (by ${message.author.tag})`);
+    } catch (err) {
+      message.reply(`❌ Failed to timeout member: ${err.message}`);
+    }
+  }
+  
+  else if (commandName === 'untimeout') {
+    if (!message.guild) return message.reply("❌ This command can only be used in a server.");
+    
+    // Check if author has permission to moderate/timeout
+    if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return message.reply("❌ You do not have permission to remove timeouts (requires `Timeout Members` permission).");
+    }
+    
+    // Check if bot has permission to moderate/timeout
+    if (!message.guild.members.me.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+      return message.reply("❌ I do not have permission to manage timeouts. Please check my server permissions.");
+    }
+    
+    const target = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
+    if (!target) {
+      return message.reply(`❌ Please mention a valid member or provide their User ID.\nExample: \`${prefix}untimeout @user\``);
+    }
+    
+    // Check if target has a timeout active
+    if (!target.communicationDisabledUntilTimestamp || target.communicationDisabledUntilTimestamp < Date.now()) {
+      return message.reply("❌ This member does not have an active timeout.");
+    }
+    
+    // Check if target is moderatable
+    if (!target.moderatable) {
+      return message.reply("❌ I cannot remove the timeout for this member. They may have a higher role than me.");
+    }
+    
+    // Check if author role is higher than target role
+    if (message.member.roles.highest.position <= target.roles.highest.position && message.guild.ownerId !== message.author.id) {
+      return message.reply("❌ You cannot remove the timeout for this member because their highest role is equal to or higher than yours.");
+    }
+    
+    try {
+      await target.timeout(null);
+      message.reply(`✅ Removed timeout for **${target.user.tag}**.\n• **Moderator**: ${message.author.tag}`);
+      console.log(`[Moderation] Removed timeout for ${target.user.tag} (by ${message.author.tag})`);
+    } catch (err) {
+      message.reply(`❌ Failed to remove timeout: ${err.message}`);
+    }
+  }
+  
   else if (commandName === 'addcmd') {
     const ownerId = process.env.OWNER_ID;
     if (!ownerId || ownerId.trim() === '') {
@@ -279,6 +460,12 @@ client.on('messageCreate', async (message) => {
 • \`${prefix}user\` - Get information about yourself.
 • \`${prefix}help\` - Show this help menu.
 • \`${prefix}listcmds\` - Show all custom commands.
+
+🛡️ **Moderation Commands** (Requires Server Permissions):
+• \`${prefix}kick <member> [reason]\` - Kick a server member.
+• \`${prefix}ban <member> [reason]\` - Ban a server member.
+• \`${prefix}timeout <member> <duration> [reason]\` - Timeout a member (e.g. \`10m\`, \`2h\`, \`1d\`).
+• \`${prefix}untimeout <member>\` - Remove active timeout from a member.
 
 👑 **Owner-Only Commands**:
 • \`${prefix}addcmd <name> <category> <response...>\` - Add/edit custom command.
