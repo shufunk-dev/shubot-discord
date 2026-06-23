@@ -133,10 +133,13 @@ async function checkNewGalnetArticles() {
     }
     
     if (articleId !== lastPostedId) {
-      console.log(`[Bot Galnet] New article detected: "${latestArticle.attributes.title}". Posting to channel: ${config.galnetChannelId}`);
+      const channelInput = config.galnetChannelId.trim();
+      const channelId = channelInput.includes('/') ? channelInput.split('/').pop().trim() : channelInput;
       
-      const channel = await client.channels.fetch(config.galnetChannelId).catch((err) => {
-        console.error(`[Bot Galnet Error] Failed to fetch channel ${config.galnetChannelId}: ${err.message}`);
+      console.log(`[Bot Galnet] New article detected: "${latestArticle.attributes.title}". Posting to channel: ${channelId}`);
+      
+      const channel = await client.channels.fetch(channelId).catch((err) => {
+        console.error(`[Bot Galnet Error] Failed to fetch channel ${channelId}: ${err.message}`);
         return null;
       });
       
