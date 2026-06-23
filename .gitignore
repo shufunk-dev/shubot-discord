@@ -1,3 +1,6 @@
 node_modules/
 .env
 bot.pid
+config.json
+custom_commands.json
+galnet_state.json
